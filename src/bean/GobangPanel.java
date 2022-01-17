@@ -255,14 +255,14 @@ public class GobangPanel extends JPanel {
         isAppendText = true;
         win.startGame();
         if (initUser == 4) {
-            currentPlayer = Chess.BLACK;// 默认黑子先行
+            currentPlayer = BLACK;// 默认黑子先行
             Chess chess = win.AIGo();
             putChess(chess.x, chess.y);// 默认第一步落在中心
             minx = maxx = miny = maxy = chess.x;
             MainUI.appendText("黑棋： 【" + (char) (64 + 8) + (16 - 8) + "】\n");
 
         } else {
-            currentPlayer = Chess.WHITE;
+            currentPlayer = WHITE;
         }
         repaint();
 
@@ -385,9 +385,9 @@ public class GobangPanel extends JPanel {
         if (!history.isEmpty()) {
             int color;
             if (initUser == 4) {   //电脑先手
-                color = (history.size() % 2 == 1) ? Chess.BLACK : Chess.WHITE;
+                color = (history.size() % 2 == 1) ? BLACK : WHITE;
             } else {
-                color = (history.size() % 2 == 1) ? Chess.WHITE : Chess.BLACK;
+                color = (history.size() % 2 == 1) ? WHITE : BLACK;
             }
             Chess lastStep = history.peek();
             int x = lastStep.getX();

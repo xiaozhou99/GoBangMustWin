@@ -2,10 +2,7 @@ package bean;
 
 
 public class Chess implements Comparable<Chess> {
-	public static final int BLACK = 1;
-	public static final int WHITE = 2;
-	public static final int BORDER = -1;
-	public static final int EMPTY = 0;
+
 	protected int x;
 	protected int y;
 	protected int color;//落子
@@ -47,13 +44,6 @@ public class Chess implements Comparable<Chess> {
 	}
 
 
-
-	//清空
-	public void reset() {
-		color = EMPTY;
-	}
-
-
 	// 打印chess对象
 
 
@@ -64,10 +54,6 @@ public class Chess implements Comparable<Chess> {
 				", y=" + y +
 				", color=" + color +
 				'}';
-	}
-
-	public boolean isEmpty() {
-		return color == EMPTY ? true : false;
 	}
 
 
