@@ -3,6 +3,9 @@ package bean;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Stack;
 
 public class GobangPanel extends JPanel {
@@ -27,7 +30,7 @@ public class GobangPanel extends JPanel {
      * history存储棋盘上所有棋子 画棋子 悔棋时用
      * boardStatus存储当前棋局  判定某位置是否有棋  五子连珠 局面评估时用  （数组可以随机访问）
      */
-    private Stack<Chess> history;// 落子历史记录，储存棋盘上所有棋子
+    private static Stack<Chess> history ;// 落子历史记录，储存棋盘上所有棋子，需设为static类型，确保创建的所有对象的history数据一致
     public static int[][] boardData;//当前的棋盘局面，EMPTY表示无子，BLACK表示黑子，WHITE表示白子，BORDER表示边界
     private int[] lastStep;// 上一个落子点，长度为2的数组，记录上一个落子点的坐标
 
@@ -43,12 +46,14 @@ public class GobangPanel extends JPanel {
     private boolean isAppendText = true;
     private Win win;//必胜棋谱类
     private Chess AIGoChess;//计算机落子点
+    private MustWinGo mustWinGo;
 
     private int minx, maxx, miny, maxy; // 当前棋局下所有棋子的最小x，最大x，最小y，最大y，用于缩小搜索落子点的范围
 
     private int cx = CENTER, cy = CENTER;
 
-    public GobangPanel(JTextArea area) {
+    public GobangPanel(){}
+    public GobangPanel(JTextArea area) throws Exception {
         boardData = new int[BT][BT];//1-15存储棋子状态，0 16为边界
         for (int i = 0; i < BT; i++) {
             for (int j = 0; j < BT; j++) {
@@ -57,9 +62,10 @@ public class GobangPanel extends JPanel {
                     boardData[i][j] = BORDER;// 边界
             }
         }
-        history = new Stack<>();
+        history = new Stack<Chess>();
         lastStep = new int[2];
-        win = new Win();
+        //win = new Win();
+        mustWinGo = new MustWinGo();
         this.area = area;
         addMouseMotionListener(mouseMotionListener);
         addMouseListener(mouseListener);
@@ -92,10 +98,11 @@ public class GobangPanel extends JPanel {
         }
         togglePlayer();
         repaint();
-        win.goback();
+        mustWinGo.goback();
     }
 
 
+    // 界面及各组件初始化
     public void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
         super.paintComponent(g2d);
@@ -103,7 +110,7 @@ public class GobangPanel extends JPanel {
         g2d.setFont(new Font("April", Font.BOLD, 12));
 
         // 画背景图
-        ImageIcon icon = new ImageIcon("src/image/background.jpg");
+        ImageIcon icon = new ImageIcon("src/main/resources/image/background.jpg");
         g2d.drawImage(icon.getImage(), 0, 0, getSize().width, getSize().height, this);
 
         // 画棋盘
@@ -121,14 +128,14 @@ public class GobangPanel extends JPanel {
             // 画提示框
             drawCell(g2d, cx, cy);
             if (!isGameOver) {
-                // 画所有棋子
-                for (Chess chess : history) {
+                for (Chess chess : history) {  // 画所有棋子
                     drawChess(g2d, chess.x, chess.y, chess.color);
                 }
-                // 画顺序
-                if (isShowOrder) {
+
+                if (isShowOrder) {  // 画顺序
                     drawOrder(g2d);
-                } else {    // 将上一个落子点标红点显示
+                }
+                else {    // 将上一个落子点标红点显示
                     if (lastStep[0] > 0 && lastStep[1] > 0) {
                         g2d.setColor(Color.RED);
                         g2d.fillRect((lastStep[0] - 1) * CELL_WIDTH + OFFSET
@@ -139,14 +146,14 @@ public class GobangPanel extends JPanel {
                     }
                 }
             }
-        } else {   //画棋谱
+        }
+        else {   //画棋谱
             // 画所有棋子
             for (Chess chess : history) {
                 drawChess(g2d, chess.x, chess.y, chess.color);
             }
             drawOrder(g2d);
         }
-
     }
 
     // 画棋盘
@@ -160,7 +167,6 @@ public class GobangPanel extends JPanel {
             g2d.drawLine(OFFSET, y * CELL_WIDTH + OFFSET,
                     (BOARD_SIZE - 1) * CELL_WIDTH + OFFSET, y
                             * CELL_WIDTH + OFFSET);
-
         }
     }
 
@@ -243,24 +249,73 @@ public class GobangPanel extends JPanel {
         }
     }
 
+    // 画棋谱
+    public void drawManual(String manualPath) {
+        File manual = new File("manual/" + manualPath); //创建对应File对象
+        int[][] records = new int[230][3]; //保存棋谱内的落子记录，每条记录以落子顺序 x y形式存储
+        int i = 0,x,y;
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(manual));
+            String line;
+            String[] content;
+
+            while ((line = br.readLine()) != null) {  //读取文件，文件中每行以落子顺序 xy的形式鵆
+                content = line.split(" "); // 将每行内容以空格分离，获取落子顺序与落子坐标
+                int order = Integer.parseInt(content[0]); //落子顺序
+                if (order % 2 ==0) {  // 根据落子顺序判断黑白棋
+                    records[i][0] = 2;
+                } else {
+                    records[i][0] = 1;
+                }
+                x = content[1].charAt(0) - 64;
+                y = 16 - Integer.parseInt(content[1].substring(1));  //获取x，y坐标
+                records[i][1] = x;
+                records[i][2] = y;
+                i++;
+            }
+            br.close();
+        } catch (FileNotFoundException ex) {
+            ex.printStackTrace();
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
+
+        reset(); //清空棋盘
+        repaint();
+
+        for (int j = 0; j < i; j++) {  // 根据棋谱内容重新设置boradData的数据
+            x = records[j][1];
+            y = records[j][2];
+            boardData[x][y] = records[j][0];
+        }
+        setHistory(records,i); // 根据棋谱重新设置history内容
+        isShowManual = true;   // 设置显示棋谱标记
+        isShowOrder = true;    // 显示落子顺序
+        MainUI.clearText();    // 清空界面右侧文本域的显示内容
+
+        repaint();
+    }
+
 
     // 开始游戏
     public void startGame(int initUser) {
-
         this.initUser = initUser;
         this.reset();
         area.setText("");
         isGameOver = false;
+        if (isShowManual == true)
+            isShowOrder = false;
         isShowManual = false;
         isAppendText = true;
-        win.startGame();
+
+        mustWinGo.startGame();
         if (initUser == 4) {
             currentPlayer = Chess.BLACK;// 默认黑子先行
-            Chess chess = win.AIGo();
+            Chess chess = mustWinGo.AIGo();
             putChess(chess.x, chess.y);// 默认第一步落在中心
             minx = maxx = miny = maxy = chess.x;
             MainUI.appendText("黑棋： 【" + (char) (64 + 8) + (16 - 8) + "】\n");
-
+            System.out.println("----黑棋完毕----");
         } else {
             currentPlayer = Chess.WHITE;
         }
@@ -303,15 +358,24 @@ public class GobangPanel extends JPanel {
                         if (isAppendText) {
                             MainUI.appendText("白棋： 【" + (char) (64 + x) + (16 - y) + "】\n");
                         }
-                        win.PlayerGo(x, 16 - y);
-                        System.out.println("\n----白棋完毕----");
+                        mustWinGo.PlayerGo(x, 16 - y);
+//                        win.PlayerGo(x, 16 - y);
+                        System.out.println("----白棋完毕----");
 
-                        AIGoChess = win.AIGo();
-                        putChess(AIGoChess.x, 16 - AIGoChess.y);
+                        AIGoChess = mustWinGo.AIGo();
+//                        AIGoChess = win.AIGo();
+                        if (AIGoChess != null){
+                            putChess(AIGoChess.x, 16 - AIGoChess.y);
+                        }
+                        else {
+                            System.out.println("您可能下错棋了，请悔棋");
+                            MainUI.appendText("您可能下错棋了，请悔棋");
+                        }
+
                         if (isAppendText) {
                             MainUI.appendText("黑棋： 【" + (char) (64 + AIGoChess.x) + (AIGoChess.y) + "】\n");
                         }
-                        System.out.println("\n----黑棋完毕----");
+                        System.out.println("----黑棋完毕----");
                     }
                 }
             }
@@ -319,13 +383,7 @@ public class GobangPanel extends JPanel {
         //}
     };
 
-    /**
-     * 落子函数
-     *
-     * @param x
-     * @param y
-     * @return
-     */
+    // 落子函数
     private boolean putChess(int x, int y) {
         if (boardData[x][y] == EMPTY) {
             // 棋盘搜索范围限制
@@ -336,7 +394,7 @@ public class GobangPanel extends JPanel {
             boardData[x][y] = currentPlayer;
             history.push(new Chess(x, y, currentPlayer));
             togglePlayer();
-            System.out.printf(" 【" + (char) (64 + x) + (16 - y) + "】");
+            System.out.println("【" + (char) (64 + x) + (16 - y) + "】");
 
             lastStep[0] = x;// 保存上一步落子点
             lastStep[1] = y;
@@ -363,6 +421,7 @@ public class GobangPanel extends JPanel {
         return false;
     }
 
+    // 转换黑白棋
     void togglePlayer() {
         currentPlayer = 3 - currentPlayer;
     }
@@ -371,14 +430,13 @@ public class GobangPanel extends JPanel {
     public void reset() {
         for (int i = 1; i < BT - 1; i++)
             for (int j = 1; j < BT - 1; j++) {
-                boardData[i][j] = EMPTY;
+                boardData[i][j] = EMPTY;  // 重设boardData
             }
-        history.clear();
+        history.clear();  // 清空落子记录栈
     }
 
     /**
      * 判断棋局是否结束
-     *
      * @return 0：进行中  1：黑棋赢  2：白棋赢  3：平手
      */
     public int isGameOver(int initUser) {
@@ -430,4 +488,57 @@ public class GobangPanel extends JPanel {
         }
         return sum;
     }
+
+    // 将落子记录以二维数组的形式，并以落子的正序顺序返回
+    public int[][] getHistory() {
+        int length = history.size();
+        int[][] array = new int[length][2];
+        for (int i = 0; i < length; i++)
+            for (int j = 0; j < 2; j++) {
+                Chess p = history.get(i);
+                array[i][0] = p.getX();
+                array[i][1] = p.getY();
+            }
+        return array;
+    }
+
+
+    // 保存当前棋局到棋谱文件中
+    public void writeManual () throws IOException {
+        int[][] temp = getHistory();
+        SimpleDateFormat ma = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+        Date time = new Date();
+        String path =  "manual/" + ma.format(time) + ".txt";
+        File file = new File(path);  // 创建棋谱文件，文件名为当前时间
+
+        if(!file.exists()){
+            //若没有manual目录，则先得到文件的上级目录，并创建上级目录，再创建文件
+            file.getParentFile().mkdir();
+            try {
+                //创建文件
+                file.createNewFile();
+                BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+                for (int i = 0; i < temp.length; i++) {    //以 落子顺序 x y 方式保存 落子顺序为单数表示黑棋，反之白棋
+                    bw.write((i+1) + " " + (char)(64 + temp[i][0]) + (16 - temp[i][1]) + "\n");
+                }
+                bw.flush();
+                bw.close();
+                JOptionPane.showMessageDialog(this,"保存成功！");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    // 根据传入的array即棋谱内容重新赋值落子记录history栈
+    public void setHistory(int[][] array,int length) {
+        Chess p;
+        for (int i = 0; i < length; i++) {
+            int x = array[i][1],y = array[i][2];
+            p = new Chess(x,y,boardData[x][y]);
+            history.push(p);
+        }
+    }
+
 }

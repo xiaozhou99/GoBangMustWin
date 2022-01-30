@@ -1,6 +1,5 @@
 package bean;
 
-
 public class Chess implements Comparable<Chess> {
 	public static final int BLACK = 1;
 	public static final int WHITE = 2;
@@ -9,7 +8,6 @@ public class Chess implements Comparable<Chess> {
 	protected int x;
 	protected int y;
 	protected int color;//落子
-
 
 	public Chess(int x, int y, int color) {
 		this.x = x;
@@ -54,9 +52,9 @@ public class Chess implements Comparable<Chess> {
 	}
 
 
+
+
 	// 打印chess对象
-
-
 	@Override
 	public String toString() {
 		return "Chess{" +

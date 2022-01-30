@@ -1,13 +1,15 @@
 package bean;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.sql.SQLException;
 
 public class MainUI extends JFrame {
 
-    public MainUI() {
+    public MainUI() throws Exception {
         initComponents();
         int initUser = -1;
 
@@ -19,8 +21,8 @@ public class MainUI extends JFrame {
         panel.startGame(initUser);
     }
 
-    @SuppressWarnings("unchecked")
-    private void initComponents() {
+    // 初始化界面及各组件
+    private void initComponents() throws Exception {
 
         grp_alg = new ButtonGroup();
         rightPane = new JPanel();
@@ -33,14 +35,15 @@ public class MainUI extends JFrame {
         btn = new JButton();
         undoBtn = new JButton();
         showGamesBtn = new JButton();
+        saveGameBtn = new JButton();
         orderBtn = new JCheckBox();
         area = new JTextArea();
         panel = new GobangPanel(area);
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setTitle("AI五子棋人机博弈");
-        setPreferredSize(new java.awt.Dimension(900, 700));
-        ImageIcon icon = new ImageIcon("src/image/logo.png");
+        setPreferredSize(new Dimension(900, 700));
+        ImageIcon icon = new ImageIcon("src/main/resources/image/logo.png");
         setIconImage(icon.getImage());
         setResizable(false);
         setLocation(250,20);
@@ -77,10 +80,12 @@ public class MainUI extends JFrame {
         humanBtn.setText("人");
         btn.setText("开始游戏");
         undoBtn.setText("悔棋");
+        saveGameBtn.setText("保存当前棋局");
         showGamesBtn.setText("查看历史棋局");
         orderBtn.setText("显示落子顺序");
 
         btn.addActionListener(l);
+        saveGameBtn.addActionListener(l);
         showGamesBtn.addActionListener(l);
         orderBtn.addActionListener(l);
         undoBtn.addActionListener(l);
@@ -92,23 +97,28 @@ public class MainUI extends JFrame {
         panel2Layout.setHorizontalGroup(
                 panel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(panel2Layout.createSequentialGroup()
-                                .addContainerGap()
                                 .addGroup(panel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(btn, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(undoBtn, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                         .addGroup(panel2Layout.createSequentialGroup()
-                                                .addComponent(jLabel1)
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(computerBtn)
-                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(humanBtn)
+                                                .addContainerGap()
+                                                .addGroup(panel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                        .addComponent(btn, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                        .addComponent(undoBtn, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                        .addGroup(panel2Layout.createSequentialGroup()
+                                                                .addComponent(jLabel1)
+                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(computerBtn)
+                                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(humanBtn)
+                                                                .addGap(0, 0, Short.MAX_VALUE))
+                                                        .addComponent(showGamesBtn, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                        .addGroup(panel2Layout.createSequentialGroup()
+                                                .addGap(39, 39, 39)
+                                                .addComponent(orderBtn)
                                                 .addGap(0, 0, Short.MAX_VALUE))
-                                        .addComponent(showGamesBtn, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                        .addGroup(panel2Layout.createSequentialGroup()
+                                                .addContainerGap()
+                                                .addComponent(saveGameBtn, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                                 .addContainerGap())
-                        .addGroup(panel2Layout.createSequentialGroup()
-                                .addGap(39, 39, 39)
-                                .addComponent(orderBtn)
-                                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         panel2Layout.setVerticalGroup(
                 panel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
@@ -118,11 +128,13 @@ public class MainUI extends JFrame {
                                         .addComponent(jLabel1)
                                         .addComponent(computerBtn)
                                         .addComponent(humanBtn))
-                                .addGap(18, 18, 18)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(btn)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 17, Short.MAX_VALUE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 11, Short.MAX_VALUE)
                                 .addComponent(undoBtn)
-                                .addGap(18, 18, 18)
+                                .addGap(12, 12, 12)
+                                .addComponent(saveGameBtn)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(showGamesBtn)
                                 .addGap(18, 18, 18)
                                 .addComponent(orderBtn)
@@ -174,27 +186,40 @@ public class MainUI extends JFrame {
         pack();
     }
 
+    // 按键事件监听
     private ActionListener l = new ActionListener() {
-
         @Override
         public void actionPerformed(ActionEvent e) {
             Object source = e.getSource();
             if (source == btn) {    //开始游戏
                 int initUser = -1;
-
                 if (humanBtn.isSelected())
                     initUser = GobangPanel.HUMAN;
                 else if (computerBtn.isSelected())
                     initUser = GobangPanel.COMPUTER;
 
                 panel.startGame(initUser);
-
-            } else if (source == orderBtn) {   //显示落子顺序
+            }
+            else if (source == orderBtn) {   //显示落子顺序
                 panel.toggleOrder();
-            } else if (source == undoBtn) {    //悔棋
-                panel.undo();
-                panel.undo();
-            } else if (source == showGamesBtn) {   //显示历史棋局
+            }
+            else if (source == undoBtn) {    //悔棋
+                if (MustWinGo.undoFlag == 2){
+                    panel.undo();
+                    panel.undo();
+                }
+                else {
+                    panel.undo();
+                }
+            }
+            else if (source == saveGameBtn) {   // 保存当前棋局
+                try {
+                    panel.writeManual();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            else if (source == showGamesBtn) {   //显示历史棋局
                 try {
                     showGames();
                 } catch (SQLException ex) {
@@ -206,18 +231,20 @@ public class MainUI extends JFrame {
         }
     };
 
-    public void showGames() throws SQLException, ClassNotFoundException {
-
-    }
-
+    // 在界面右侧文本域中添加文本内容
     public static void appendText(String s) {
         area.append(s);
     }
 
+    // 清空界面右侧文本域
     public static void clearText() {
         area.setText("");
     }
 
+    // 显示历史棋谱对话框
+    public void showGames() throws SQLException, ClassNotFoundException {
+        new GameDialog(this,true).setVisible(true);
+    }
 
     public static void main(String args[]) {
         try {
@@ -240,7 +267,11 @@ public class MainUI extends JFrame {
 
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new MainUI().setVisible(true);
+                try {
+                    new MainUI().setVisible(true);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
@@ -256,6 +287,7 @@ public class MainUI extends JFrame {
     private JScrollPane panel1;
     private JPanel panel2;
     private JPanel rightPane;
+    private JButton saveGameBtn;
     private JButton showGamesBtn;
     private JButton undoBtn;
     private GobangPanel panel;
