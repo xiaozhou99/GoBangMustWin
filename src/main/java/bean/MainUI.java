@@ -9,21 +9,21 @@ import java.sql.SQLException;
 
 public class MainUI extends JFrame {
 
+    // 构造函数
     public MainUI() throws Exception {
-        initComponents();
-        int initUser = -1;
+        initComponents();  //界面初始化
 
-        if (humanBtn.isSelected())
+        int initUser = -1; //设置先手
+        if (humanBtn.isSelected())  //根据界面选择的先手按相应先手开局，目前暂都设电脑先手
             initUser = GobangPanel.HUMAN;
         else if (computerBtn.isSelected())
             initUser = GobangPanel.COMPUTER;
 
-        panel.startGame(initUser);
+        panel.startGame(initUser); //调用GobangPanel中的startGame开始游戏，默认界面一显示就自动开局
     }
 
     // 初始化界面及各组件
     private void initComponents() throws Exception {
-
         grp_alg = new ButtonGroup();
         rightPane = new JPanel();
         panel1 = new JScrollPane();
@@ -38,8 +38,9 @@ public class MainUI extends JFrame {
         saveGameBtn = new JButton();
         orderBtn = new JCheckBox();
         area = new JTextArea();
-        panel = new GobangPanel(area);
+        panel = new GobangPanel(area);  //面板对象初始化
 
+        // 界面属性设置
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setTitle("AI五子棋人机博弈");
         setPreferredSize(new Dimension(900, 700));
@@ -49,6 +50,7 @@ public class MainUI extends JFrame {
         setLocation(250,20);
         setVisible(true);
 
+        //组件布局设置
         GroupLayout panelLayout = new GroupLayout(panel);
         panel.setLayout(panelLayout);
         panelLayout.setHorizontalGroup(
@@ -61,17 +63,13 @@ public class MainUI extends JFrame {
         );
 
         panel1.setBorder(BorderFactory.createTitledBorder("落棋过程"));
-
         area.setColumns(15);
         area.setRows(5);
         area.setBorder(null);
         area.setEnabled(false);
         panel1.setViewportView(area);
-
         panel2.setBorder(BorderFactory.createTitledBorder("操作"));
-
         jLabel1.setText("选择先手：");
-
         grp_alg.add(computerBtn);
         computerBtn.setText("电脑");
         computerBtn.setSelected(true);
@@ -84,14 +82,14 @@ public class MainUI extends JFrame {
         showGamesBtn.setText("查看历史棋局");
         orderBtn.setText("显示落子顺序");
 
+        //给按钮添加事件监听
         btn.addActionListener(l);
         saveGameBtn.addActionListener(l);
         showGamesBtn.addActionListener(l);
         orderBtn.addActionListener(l);
         undoBtn.addActionListener(l);
 
-
-
+        //布局
         GroupLayout panel2Layout = new GroupLayout(panel2);
         panel2.setLayout(panel2Layout);
         panel2Layout.setHorizontalGroup(
@@ -163,6 +161,7 @@ public class MainUI extends JFrame {
                                 .addComponent(panel2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
         );
 
+        //布局
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -190,7 +189,7 @@ public class MainUI extends JFrame {
     private ActionListener l = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-            Object source = e.getSource();
+            Object source = e.getSource();  //获取事件源
             if (source == btn) {    //开始游戏
                 int initUser = -1;
                 if (humanBtn.isSelected())
@@ -204,11 +203,11 @@ public class MainUI extends JFrame {
                 panel.toggleOrder();
             }
             else if (source == undoBtn) {    //悔棋
-                if (MustWinGo.undoFlag == 2){
+                if (MustWinGo.undoFlag == 2){ //=2的情况是，在必胜棋谱中白子有几种变化，即白子下了后黑子会应对的，此时悔棋需悔两步
                     panel.undo();
                     panel.undo();
                 }
-                else {
+                else {  //=1的情况是，白子乱下，只需悔当前一步
                     panel.undo();
                 }
             }
@@ -277,19 +276,19 @@ public class MainUI extends JFrame {
     }
 
 
-    private static JTextArea area;
-    private JButton btn;
+    private static JTextArea area; //右侧文本域
+    private JButton btn; //开始游戏按钮
+    private ButtonGroup grp_alg; //先手选择
     private JRadioButton computerBtn;
-    private ButtonGroup grp_alg;
     private JRadioButton humanBtn;
     private JLabel jLabel1;
-    private JCheckBox orderBtn;
+    public static JCheckBox orderBtn; //是否显示落子顺序复选框
     private JScrollPane panel1;
     private JPanel panel2;
     private JPanel rightPane;
-    private JButton saveGameBtn;
-    private JButton showGamesBtn;
-    private JButton undoBtn;
-    private GobangPanel panel;
+    private JButton saveGameBtn;  //保存当前棋局按钮
+    private JButton showGamesBtn; //显示历史棋谱按钮
+    private JButton undoBtn;  //悔棋按钮
+    private GobangPanel panel; //GobangPanel对象
 }
 

@@ -6,9 +6,9 @@ import java.awt.event.ActionListener;
 import java.io.*;
 import java.sql.SQLException;
 
-// 历史棋谱列表对话框的显示类
+// 历史棋谱列表对话框的显示类，历史棋谱存储在项目目录下的manual目录中，以保存时间为文件名（后续再根据情况修改）
 public class GameDialog extends JDialog {
-
+    // 构造函数，参数parent表示其在MainUI的JFrame上显示
     public GameDialog(JFrame parent, boolean modal) throws SQLException, ClassNotFoundException {
         super(parent,modal);
         initComponents();
@@ -25,7 +25,7 @@ public class GameDialog extends JDialog {
         r = new DefaultTableCellRenderer();
         fileNameList = getFileNameList();  // 通过getFileNameList方法获取所有历史棋谱文件名
         tableData = new Object[fileNameList.length][];
-        for (int i = 0; i < fileNameList.length; i++) {  // 初始化表格显示内容，即历史棋谱文件名
+        for (int i = 0; i < fileNameList.length; i++) {  // 初始化表格显示内容，即显示历史棋谱文件名
             tableData[i] = new Object[]{fileNameList[i]};
         }
 
@@ -35,10 +35,10 @@ public class GameDialog extends JDialog {
         table.getTableHeader().setDefaultRenderer(r);
 
         // 窗口、按钮属性设置
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("历史棋谱列表");
-        setLocation(400,200);
-        showManualBtn.setText("显示棋谱");
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE); //设置右上角关闭则对话框消失
+        setTitle("历史棋谱列表");  //设置对话框标题
+        setLocation(400,200);  //设置对话框在电脑屏幕上的显示位置，该坐标为对话框左上角坐标
+        showManualBtn.setText("显示棋谱");  //设置按钮显示文字
         backBtn.setText("返回");
 
         // 给按钮添加事件监听对象
@@ -47,15 +47,15 @@ public class GameDialog extends JDialog {
 
         // 设置表格格式
         table.setModel(new javax.swing.table.DefaultTableModel(
-                tableData,
-                new String [] {
+                tableData,  //表格内容
+                new String [] {  //表头内容
                         "历史棋谱"
                 }
         ) {
-            Class[] types = new Class [] {
+            Class[] types = new Class [] {  //表格数据类型
                     java.lang.String.class
             };
-            boolean[] canEdit = new boolean [] {
+            boolean[] canEdit = new boolean [] {  //设置表格不可编辑
                     false
             };
 
@@ -103,20 +103,20 @@ public class GameDialog extends JDialog {
     // 事件监听处理
     private ActionListener l = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-            Object source = e.getSource();
+            Object source = e.getSource();  //获取事件源
 
-            if (source == showManualBtn) {    // 显示棋谱
+            if (source == showManualBtn) {    // 显示棋谱按钮
                 int index = table.getSelectedRow();  // 获取用户选中的棋谱序号，index从0开始
                 if (index == -1){  // -1表示未选中
                     showMessage();  // 显示需选择记录的提示信息
                 }
                 else {
                     String manualPath = (String) table.getValueAt(index,0);  // 获取选中的棋谱文件名
-                    panel.drawManual(manualPath);  // 调用drawManual方法复现棋谱
+                    panel.drawManual(manualPath);  // 调用GobangPanel类中的drawManual方法复现棋谱
                     setUnseen();  // 设置对话框消失
                 }
             } else if (source == backBtn) {  // 返回按钮
-                setUnseen();
+                setUnseen(); // 设置对话框消失
             }
         }
     };
@@ -125,10 +125,10 @@ public class GameDialog extends JDialog {
     private String[] getFileNameList() {
         String path = "manual";  // manual目录保存棋谱文件
         File dir = new File(path);
-        String[] result = null;
+        String[] result = null;  //返回结果列表
 
-        if (dir.isDirectory()) {  // 判断dir是否为目录类型
-            result = dir.list();  //File类中的list方法可获取当前目录下的所有文件名，并以String[]形式返回
+        if (dir.isDirectory()) {  // 先判断dir是否为目录类型
+            result = dir.list();  // File类中的list方法可获取当前目录下的所有文件名，并以String[]形式返回
         }
         return result;
     }
@@ -143,7 +143,7 @@ public class GameDialog extends JDialog {
         this.setVisible(false);
     }
 
-
+    // 变量定义
     private JButton backBtn;  // 返回按钮
     private JScrollPane jScrollPane;  // 滚动面板
     private JButton showManualBtn;  // 显示棋谱按钮
