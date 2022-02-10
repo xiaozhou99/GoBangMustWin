@@ -75,9 +75,9 @@ public class Win {
         if (child.size() != 0) {
             for (int i = 0; i < child.size(); i++) {
                 if (child.get(i).x == x && child.get(i).y == y) {
-                    System.out.println("3");
+
                     currentNode = child.get(i);
-                    System.out.println(currentNode.x + " " + currentNode.y);
+
                 }
                 //如果找不到 当前节点不更新
             }

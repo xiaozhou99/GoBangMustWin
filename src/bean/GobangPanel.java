@@ -17,9 +17,9 @@ public class GobangPanel extends JPanel {
     public static final int BORDER = -1;//边界
     public static final int EMPTY = 0;//棋盘上无子
 
-    public static final int MANUAL = 0;// 双人模式
-    public static final int HALF = 1;// 人机模式
-    public static final int AUTO = 2;// 双机模式
+    public static final int ManMan = 0;// 双人模式
+    public static final int ManAI = 1;// 人机模式
+
     public static final int HUMAN = 3;//
     public static final int COMPUTER = 4;//
 
@@ -27,7 +27,7 @@ public class GobangPanel extends JPanel {
      * history存储棋盘上所有棋子 画棋子 悔棋时用
      * boardStatus存储当前棋局  判定某位置是否有棋  五子连珠 局面评估时用  （数组可以随机访问）
      */
-    private Stack<Chess> history;// 落子历史记录，储存棋盘上所有棋子
+    public Stack<Chess> history;// 落子历史记录，储存棋盘上所有棋子
     public static int[][] boardData;//当前的棋盘局面，EMPTY表示无子，BLACK表示黑子，WHITE表示白子，BORDER表示边界
     private int[] lastStep;// 上一个落子点，长度为2的数组，记录上一个落子点的坐标
 
@@ -37,6 +37,7 @@ public class GobangPanel extends JPanel {
     private static boolean isShowOrder = false;// 显示落子顺序
     private static boolean isGameOver = true;
     public static int initUser;// 先手
+    public static int VSMode;//对战模式,ManMan=0 代表双人对战，ManAI=1代表人机对战
 
     private JTextArea area;
     private static boolean isShowManual = false; //是否是画棋谱
@@ -75,8 +76,7 @@ public class GobangPanel extends JPanel {
     // 悔棋
     public void undo() {
         if (!history.isEmpty()) {
-            if(history.size()==1&&initUser==COMPUTER)
-            {
+            if (history.size() == 1 && initUser == COMPUTER) {
                 return;
             }
             Chess p1 = history.pop();
@@ -86,13 +86,18 @@ public class GobangPanel extends JPanel {
                 lastStep[0] = chess.x;
                 lastStep[1] = chess.y;
             }
+            togglePlayer();
+            repaint();
+            if(VSMode==ManAI)
+            {
+                win.goback();
+            }
         } else {
             lastStep[0] = BORDER;
             lastStep[1] = BORDER;
         }
-        togglePlayer();
-        repaint();
-        win.goback();
+
+
     }
 
 
@@ -245,25 +250,31 @@ public class GobangPanel extends JPanel {
 
 
     // 开始游戏
-    public void startGame(int initUser) {
+    public void startGame(int initUser, int VSMode) {
 
         this.initUser = initUser;
+        this.VSMode = VSMode;
         this.reset();
         area.setText("");
         isGameOver = false;
         isShowManual = false;
         isAppendText = true;
         win.startGame();
-        if (initUser == 4) {
-            currentPlayer = Chess.BLACK;// 默认黑子先行
-            Chess chess = win.AIGo();
-            putChess(chess.x, chess.y);// 默认第一步落在中心
-            minx = maxx = miny = maxy = chess.x;
-            MainUI.appendText("黑棋： 【" + (char) (64 + 8) + (16 - 8) + "】\n");
+        if (VSMode == ManAI)//人机
+        {
+            if (initUser == COMPUTER) {//电脑先手
+                currentPlayer = Chess.BLACK;// 默认黑子先行
+                Chess chess = win.AIGo();
+                putChess(chess.x, chess.y);// 默认第一步落在中心
+                minx = maxx = miny = maxy = chess.x;
 
+            } else {
+                currentPlayer = Chess.WHITE;
+            }
         } else {
-            currentPlayer = Chess.WHITE;
+            currentPlayer = Chess.BLACK;
         }
+
         repaint();
 
     }
@@ -300,18 +311,12 @@ public class GobangPanel extends JPanel {
                 int mods = e.getModifiers();
                 if ((mods & InputEvent.BUTTON1_MASK) != 0) {// 鼠标左键
                     if (putChess(x, y)) {
-                        if (isAppendText) {
-                            MainUI.appendText("白棋： 【" + (char) (64 + x) + (16 - y) + "】\n");
+                        if (VSMode == ManAI) {
+                            win.PlayerGo(x, 16 - y);
+                            AIGoChess = win.AIGo();
+                            putChess(AIGoChess.x, 16 - AIGoChess.y);
                         }
-                        win.PlayerGo(x, 16 - y);
-                        System.out.println("\n----白棋完毕----");
 
-                        AIGoChess = win.AIGo();
-                        putChess(AIGoChess.x, 16 - AIGoChess.y);
-                        if (isAppendText) {
-                            MainUI.appendText("黑棋： 【" + (char) (64 + AIGoChess.x) + (AIGoChess.y) + "】\n");
-                        }
-                        System.out.println("\n----黑棋完毕----");
                     }
                 }
             }
@@ -335,19 +340,22 @@ public class GobangPanel extends JPanel {
             maxy = Math.max(maxy, y);
             boardData[x][y] = currentPlayer;
             history.push(new Chess(x, y, currentPlayer));
-            togglePlayer();
-            System.out.printf(" 【" + (char) (64 + x) + (16 - y) + "】");
+            if (isAppendText) {
+                String str = currentPlayer == 2 ? "白棋：" : "黑棋：";
+                MainUI.appendText(str + "【" + (char) (64 + x) + (16 - y) + "】\n");
+                System.out.printf(str + " 【" + (char) (64 + x) + (16 - y) + "】");
+            }
 
             lastStep[0] = x;// 保存上一步落子点
             lastStep[1] = y;
             repaint();
-            int winSide = isGameOver(initUser);// 判断终局
+            int winSide = isGameOver(currentPlayer);// 判断终局
             if (winSide > 0) {
 
-                if (winSide == humanSide) {
+                if (winSide == WHITE) {
                     MainUI.appendText("白方赢了！\n");
                     JOptionPane.showMessageDialog(GobangPanel.this, "白方赢了！");
-                } else if (winSide == computerSide) {
+                } else if (winSide == BLACK) {
                     MainUI.appendText("黑方赢了！\n");
                     JOptionPane.showMessageDialog(GobangPanel.this, "黑方赢了！");
                 } else {
@@ -357,7 +365,7 @@ public class GobangPanel extends JPanel {
 
                 return false;
             }
-
+            togglePlayer();
             return true;
         }
         return false;
@@ -381,14 +389,9 @@ public class GobangPanel extends JPanel {
      *
      * @return 0：进行中  1：黑棋赢  2：白棋赢  3：平手
      */
-    public int isGameOver(int initUser) {
+    public int isGameOver(int color) {
         if (!history.isEmpty()) {
-            int color;
-            if (initUser == 4) {   //电脑先手
-                color = (history.size() % 2 == 1) ? Chess.BLACK : Chess.WHITE;
-            } else {
-                color = (history.size() % 2 == 1) ? Chess.WHITE : Chess.BLACK;
-            }
+
             Chess lastStep = history.peek();
             int x = lastStep.getX();
             int y = lastStep.getY();
