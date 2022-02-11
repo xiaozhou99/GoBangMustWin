@@ -40,6 +40,8 @@ public class GobangPanel extends JPanel {
     public static int VSMode;//对战模式,ManMan=0 代表双人对战，ManAI=1代表人机对战
 
     private JTextArea area;
+    private JDialog settingTip;
+
     private static boolean isShowManual = false; //是否是画棋谱
     private boolean isAppendText = true;
     private Win win;//必胜棋谱类
@@ -49,7 +51,7 @@ public class GobangPanel extends JPanel {
 
     private int cx = CENTER, cy = CENTER;
 
-    public GobangPanel(JTextArea area) {
+    public GobangPanel(JTextArea area,JDialog settingTip) {
         boardData = new int[BT][BT];//1-15存储棋子状态，0 16为边界
         for (int i = 0; i < BT; i++) {
             for (int j = 0; j < BT; j++) {
@@ -62,6 +64,7 @@ public class GobangPanel extends JPanel {
         lastStep = new int[2];
         win = new Win();
         this.area = area;
+        this.settingTip=settingTip;
         addMouseMotionListener(mouseMotionListener);
         addMouseListener(mouseListener);
         setPreferredSize(new Dimension(650, 700));
@@ -301,7 +304,7 @@ public class GobangPanel extends JPanel {
     private MouseListener mouseListener = new MouseAdapter() {
         public void mouseClicked(MouseEvent e) {
             if (isGameOver) {
-                JOptionPane.showMessageDialog(GobangPanel.this, "请开始新游戏！");
+                settingTip.setVisible(true);
                 return;
             }
             int x = Math.round((e.getX() - OFFSET) * 1.0f / CELL_WIDTH) + 1;
@@ -341,9 +344,9 @@ public class GobangPanel extends JPanel {
             boardData[x][y] = currentPlayer;
             history.push(new Chess(x, y, currentPlayer));
             if (isAppendText) {
-                String str = currentPlayer == 2 ? "白棋：" : "黑棋：";
+                String str = currentPlayer == WHITE ? "白棋：" : "黑棋：";
                 MainUI.appendText(str + "【" + (char) (64 + x) + (16 - y) + "】\n");
-                System.out.printf(str + " 【" + (char) (64 + x) + (16 - y) + "】");
+                System.out.println(str + " 【" + (char) (64 + x) + (16 - y) + "】");
             }
 
             lastStep[0] = x;// 保存上一步落子点

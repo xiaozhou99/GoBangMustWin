@@ -35,7 +35,7 @@ public class MainUI extends JFrame {
         showGamesBtn = new JButton();
         orderBtn = new JCheckBox();
         area = new JTextArea();
-        gobangPanel = new GobangPanel(area);
+
         savaExcelBtn = new JButton("保存棋谱到Excel");
         VsMode = new ButtonGroup();
         jLabel2 = new JLabel("对战模式：");
@@ -48,6 +48,7 @@ public class MainUI extends JFrame {
         settingTip.setLocationRelativeTo(gobangPanel);
         setting_ok = new JButton("确定");
 
+        gobangPanel = new GobangPanel(area,settingTip);
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setTitle("AI五子棋人机博弈");
@@ -265,11 +266,26 @@ public class MainUI extends JFrame {
             // 创建行，下标从最后一行+1开始
             XSSFRow row = sheet.createRow(rowNumber);
 
+            DataAnnotations dataAnnotations = new DataAnnotations();//生成棋子数据标注类
             int i = 0;
             for (Chess chess : gobangPanel.history) {
+                //获取坐标
                 String X = String.valueOf((char) (64 + chess.x));
-                String Y = (16 - chess.y) + ":";
-                String note = "哈哈哈";
+                String Y = String.valueOf((16 - chess.y));
+
+                //获取数据标注
+                String note=":";
+
+                if (chess == gobangPanel.history.peek()) {
+                    note += "必胜手";
+                    System.out.println(note);
+                }
+                else {
+                    String strGone = dataAnnotations.ScanBoard(chess, true);//判定该步棋的攻击行为
+                    String strFang = dataAnnotations.ScanBoard(chess, false);//判定该步棋的防守行为
+                    System.out.println(strGone+"——"+strFang);
+                    note += dataAnnotations.Check(strGone, strFang);//根据攻守情况，返回最终的数据标注
+                }
                 row.createCell(i++).setCellValue(X + Y + note);
                 System.out.println(X + Y + note);
             }
@@ -279,11 +295,14 @@ public class MainUI extends JFrame {
             workBook.write(out);// 将数据导出到Excel表格
             out.close();
             workBook.close();
+            JOptionPane.showMessageDialog(this, "数据导出成功！");
         } catch (IOException e) {
             e.printStackTrace();
+            System.out.println();
+            JOptionPane.showMessageDialog(this, e.getMessage(),"出错啦！",0);
         }
 
-        System.out.println("数据导出成功");
+
     }
 
     // 判断行是否为空
@@ -323,12 +342,10 @@ public class MainUI extends JFrame {
             } else if (source == orderBtn) {   //显示落子顺序
                 gobangPanel.toggleOrder();
             } else if (source == undoBtn) {    //悔棋
-                if(GobangPanel.VSMode==GobangPanel.ManAI)
-                {
+                if (GobangPanel.VSMode == GobangPanel.ManAI) {
                     gobangPanel.undo();
                     gobangPanel.undo();
-                }
-                else {
+                } else {
                     gobangPanel.undo();
                 }
 

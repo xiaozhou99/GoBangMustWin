@@ -3,16 +3,12 @@ package bean;
 //数据标记类
 public class DataAnnotations {
 
-    private int[][] data;
+    private int[][] data;//用来模拟棋盘的落子过程并进行扫描
 
-    //攻
-    boolean GongHuo_Three = false;//活三
-    boolean GongHuo_Four = false;//活四
-    boolean GongChong_Four = false;//冲四
-    boolean GongFive=false;//连五
-    //防
-    boolean FangHuoThree = false;//防活三
-    boolean FangChong_Four = false;//防冲四
+    private boolean Huo_Three = false;//活三
+    private boolean Huo_Four = false;//活四
+    private boolean Chong_Four = false;//冲四
+    private boolean GongFive = false;//连五
 
     public DataAnnotations() {
         //一步一步复现棋盘状态，以扫描棋盘上的棋型
@@ -27,17 +23,20 @@ public class DataAnnotations {
     }
 
 
-
     /**
-    *@param isAttack 判断对当前棋子chess是攻击判定还是防守判定,true为攻击判定
+     * @param isAttack 判断对当前棋子chess是攻击判定还是防守判定,true为攻击判定
      */
-    public String ScanBoard(Chess chess,boolean isAttack) {
-        String note = "";
-        if(!isAttack)//如果是防守判定
+    public String ScanBoard(Chess chess, boolean isAttack) {
+
+        reset();//重置棋子行为状态
+
+        if (!isAttack)//如果是防守判定
         {
-            chess.color=3-chess.color;//转换为对方棋子，判断会成什么棋型
+            chess.color = 3 - chess.color;//转换为对方棋子，判断会成什么棋型
+
         }
         data[chess.x][chess.y] = chess.color;
+
         for (int dir = 1; dir <= 4; dir++) {//dir从1到4，分别代表四个扫描方向
             int chessCount = 1;  // 和当前位置里连续同色的棋子数 ###
             int spaceCount1 = 0;//同色棋子右边一端空位数###000(r)
@@ -84,7 +83,7 @@ public class DataAnnotations {
                         }
                     }
                     //相反方向——在同色棋子尽头查找连续的空格数
-                    while ((k > 0) && (data[k][chess.y] == 0)) {
+                    while ((k >= 1) && (data[k][chess.y] == 0)) {
                         spaceCount2++;
                         k--;
                     }
@@ -134,7 +133,7 @@ public class DataAnnotations {
                         }
                     }
                     //相反方向——在同色棋子尽头查找连续的空格数
-                    while ((k > 0) && (data[chess.x][k] == 0)) {
+                    while ((k >= 1) && (data[chess.x][k] == 0)) {
                         spaceCount2++;
                         k--;
                     }
@@ -207,7 +206,7 @@ public class DataAnnotations {
 
                 case 4:  //  右上到左下
                     for (k = chess.x + 1, n = chess.y - 1; k < GobangPanel.BT - 1 && n >= 1; k++, n--) {  //查找连续的同色棋子
-                        if (data[k][n] == 1) {
+                        if (data[k][n] == chess.color) {
                             chessCount++;
                         } else {
                             break;
@@ -234,12 +233,9 @@ public class DataAnnotations {
 
                     //向相反方向查找相同颜色连续的棋子
                     for (k = chess.x - 1, n = chess.y + 1; k >= 1 && n < GobangPanel.BT - 1; k--, n++) {  //查找连续的同色棋子
-                        if (data[k][n] == 1) {
+                        if (data[k][n] == chess.color) {
                             chessCount++;
                         } else {
-                            if (data[k][n] == 0) {
-                                spaceCount2 = 1;
-                            }
                             break;
                         }
                     }
@@ -262,55 +258,151 @@ public class DataAnnotations {
                         }
                     }
             }
+
             switch (chessCount) {
                 case 5://连续同色五子
-                    if(!isAttack)//如果是防守
-                    {
-                        FangChong_Four=true;
-                    }
-                    else {
-                        GongFive=true;
-                    }
+                    GongFive = true;
                     break;
+
                 case 4://连续同色四子
                     if ((spaceCount1 > 0) && (spaceCount2 > 0)) { //活四 011110
-                        if(!isAttack)
-                        {
-                            FangHuoThree=true;
-                        }
-                        else {
-                            GongHuo_Four = true;
+
+                        //  0111101  1011110
+                        if ((spaceCount1 == 1 && chessRight > 0) || (spaceCount2 == 1 && chessLeft > 0)) {
+                            Chong_Four = true;
+                        } else {
+                            Huo_Four = true;
                         }
 
                     } else if ((spaceCount1 > 0 && spaceCount2 == 0)
                             || (spaceCount1 == 0 && spaceCount2 > 0)) {//冲四  #11110 01111#
-                        if(isAttack)
-                        {
-                            GongChong_Four = true;
-                        }
+                        Chong_Four = true;
 
                     }
                     break;
                 case 3://连续同色三子 111
+                    // 1011101
+                    if (((spaceCount1 == 1) && (chessRight == 1)) && ((spaceCount2 == 1) && (chessLeft == 1))) {
+                        Huo_Four = true;
+                    }
+                    // 11101  10111
+                    else if (((spaceCount1 == 1) && (chessRight == 1)) || ((spaceCount2 == 1) && (chessLeft == 1))) {
+                        Chong_Four = true;
+                    }
+                    //  011100  001110
+                    else if (((spaceCount1 > 1) && (spaceCount2 > 0)) || ((spaceCount1 > 0) && (spaceCount2 > 1))) {
+                        Huo_Three = true;
+                    }
                     break;
-                case 2://连续同色三子 11
+                case 2://连续同色二子 11
+                    //  11011011
+                    if ((spaceCount1 == 1) && (chessRight == 2) && (spaceCount2 == 1) && (chessLeft == 2)) {
+                        Huo_Four = true;
+                    }
+                    //  11011
+                    else if (((spaceCount1 == 1) && (chessRight == 2)) || ((spaceCount2 == 1) && (chessLeft == 2))) {
+                        Chong_Four = true;
+                    }
+                    //  011010  010110
+                    else if (((spaceCount1 == 1) && (chessRight == 1) && (chessRightSpace > 0) && (spaceCount2 > 0))
+                            || ((spaceCount2 == 1) && (chessLeft == 1)) && (chessLeftSpace > 0) && (spaceCount1 > 0)) {
+                        Huo_Three = true;
+                    }
                     break;
 
                 case 1:
+                    //  10111  11101
+                    if (((spaceCount1 == 1) && (chessRight == 3)) || (spaceCount2 == 1) && (chessLeft == 3)) {
+                        Chong_Four = true;
+                    }
+                    //  010110   011010
+                    else if (((spaceCount1 == 1) && (chessRight == 2) && (chessRightSpace >= 1) && (spaceCount2 >= 1))
+                            || ((spaceCount2 == 1) && (chessLeft == 2) && (chessLeftSpace >= 1) && (spaceCount1 >= 1))) {
+                        Huo_Three = true;
+                    }
                     break;
 
-
                 default:
-                    System.out.println("语法填空过了好久");
+                    System.out.println("匹配失败");
             }
-            System.out.println(chessCount);
-
-        }
-        if(!isAttack){
-            chess.color=3-chess.color;//恢复棋子颜色
         }
 
-        return "必胜手";
+        if (!isAttack) {
+            chess.color = 3 - chess.color;//恢复棋子颜色
+            data[chess.x][chess.y] = chess.color;
+        }
+
+        //返回该步棋的数据标注
+        if (isAttack)//攻击判断
+        {
+            if (GongFive) {
+                return "连五";
+            } else if (Huo_Four) {
+                return "活四";
+            } else if (Chong_Four) {
+                if (Huo_Three) {
+                    return "冲四活三";
+                } else {
+                    return "冲四";
+                }
+            } else if (Huo_Three) {
+                return "活三";
+            }
+        } else {//防守判断
+            if (GongFive) {
+                return "防冲四";
+            } else if (Huo_Four) {
+                return "防活三";
+            } else if (Chong_Four) {
+                if (Huo_Three) {
+                    return "防冲四活三";
+                }
+
+            }
+        }
+        return "##";//##代表未匹配成功
 
     }
+
+    /**
+     * 比较攻击行为和防守行为，对该步棋给出最后的标注
+     */
+    public String Check(String strGong, String strFang) {
+        if (strGong.equals("##") && strFang.equals("##")) {
+            return "定式";
+        } else if (strGong.equals("##") || strFang.equals("##")) {
+            if (strFang.equals("##"))//有攻无防
+            {
+                return strGong;
+            }
+            if (strGong.equals("##"))//有防无攻
+            {
+                return strFang;
+            }
+        } else {
+            if (strFang.equals("防活三")) {
+                if (strGong.equals("冲四")) {
+                    return "强冲四";
+                } else if (strGong.equals("活三")) {
+                    return "强活三";
+                }
+
+            } else {
+                return strGong + strFang;
+            }
+        }
+
+        return "定式";
+    }
+
+
+    //重置棋子行为状态
+    public void reset() {
+        GongFive = false;
+        Huo_Four = false;
+        Huo_Three = false;
+        Chong_Four = false;
+    }
+
+
 }
