@@ -1,5 +1,6 @@
 package bean;
 
+import org.apache.poi.EmptyFileException;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -241,8 +242,13 @@ public class MainUI extends JFrame {
             // 读取Excel文档
             File file = new File(path);
             if (!file.exists()) {
+                //表格文件不存在，创建空白表格
+                XSSFWorkbook blankExcel = new XSSFWorkbook();
+
+                FileOutputStream outBlank = new FileOutputStream(file);
+                blankExcel.write(outBlank);
+                outBlank.close();//关闭输出流
                 System.out.println("文件不存在，已创建");
-                file.createNewFile();
 
             }
             // Excel2003版本（包含2003）以前使用HSSFWorkbook类，扩展名为.xls
@@ -251,13 +257,14 @@ public class MainUI extends JFrame {
             // 创建工作簿类
             FileInputStream in = new FileInputStream(path);
             XSSFWorkbook workBook = new XSSFWorkbook(in);
+            in.close();//关闭输入流
 
-            // 创建工作表并设置表名
             // sheet 对应一个工作页
             XSSFSheet sheet = workBook.getSheet("数据标注");
-            if (sheet == null) {
+            if (sheet == null) {//sheet为空则创建
                 sheet = workBook.createSheet("数据标注");
             }
+            sheet.setDefaultColumnWidth(17);//设置列宽
             int rowNumber = sheet.getLastRowNum();    // 第一行从0开始算
             XSSFRow lastRow = sheet.getRow(rowNumber);
             if (!isRowEmpty(lastRow)) {
@@ -265,7 +272,7 @@ public class MainUI extends JFrame {
             }
             // 创建行，下标从最后一行+1开始
             XSSFRow row = sheet.createRow(rowNumber);
-
+            row.setHeightInPoints(24 );//设置行高
             DataAnnotations dataAnnotations = new DataAnnotations();//生成棋子数据标注类
             int i = 0;
             for (Chess chess : gobangPanel.history) {
@@ -274,21 +281,20 @@ public class MainUI extends JFrame {
                 String Y = String.valueOf((16 - chess.y));
 
                 //获取数据标注
-                String note=":";
+                String note="-";
 
                 if (chess == gobangPanel.history.peek()) {
                     note += "必胜手";
-                    System.out.println(note);
                 }
                 else {
                     String strGone = dataAnnotations.ScanBoard(chess, true);//判定该步棋的攻击行为
                     String strFang = dataAnnotations.ScanBoard(chess, false);//判定该步棋的防守行为
-                    System.out.println(strGone+"——"+strFang);
                     note += dataAnnotations.Check(strGone, strFang);//根据攻守情况，返回最终的数据标注
                 }
-                row.createCell(i++).setCellValue(X + Y + note);
+                row.createCell(i++).setCellValue(i+"."+X + Y + note);
                 System.out.println(X + Y + note);
             }
+
 
             // 创建文件输出流，准备输出电子表格：这个必须有，否则你在sheet上做的任何操作都不会有效
             FileOutputStream out = new FileOutputStream(path);
@@ -298,7 +304,9 @@ public class MainUI extends JFrame {
             JOptionPane.showMessageDialog(this, "数据导出成功！");
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println();
+            JOptionPane.showMessageDialog(this, e.getMessage(),"出错啦！",0);
+        }catch (EmptyFileException e){
+            e.printStackTrace();
             JOptionPane.showMessageDialog(this, e.getMessage(),"出错啦！",0);
         }
 
