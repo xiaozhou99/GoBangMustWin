@@ -49,7 +49,7 @@ public class MainUI extends JFrame {
         settingTip.setLocationRelativeTo(gobangPanel);
         setting_ok = new JButton("确定");
 
-        gobangPanel = new GobangPanel(area,settingTip);
+        gobangPanel = new GobangPanel(area, settingTip);
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setTitle("AI五子棋人机博弈");
@@ -271,7 +271,7 @@ public class MainUI extends JFrame {
             }
             // 创建行，下标从最后一行+1开始
             XSSFRow row = sheet.createRow(rowNumber);
-            row.setHeightInPoints(24 );//设置行高
+            row.setHeightInPoints(24);//设置行高
             DataAnnotations dataAnnotations = new DataAnnotations();//生成棋子数据标注类
             int i = 0;
             for (Chess chess : gobangPanel.history) {
@@ -280,17 +280,12 @@ public class MainUI extends JFrame {
                 String Y = String.valueOf((16 - chess.y));
 
                 //获取数据标注
-                String note="-";
-
-                if (chess == gobangPanel.history.peek()) {
-                    note += "必胜手";
-                }
-                else {
-                    String strGone = dataAnnotations.ScanBoard(chess, true);//判定该步棋的攻击行为
-                    String strFang = dataAnnotations.ScanBoard(chess, false);//判定该步棋的防守行为
-                    note += dataAnnotations.Check(strGone, strFang);//根据攻守情况，返回最终的数据标注
-                }
-                row.createCell(i++).setCellValue(i+"."+X + Y + note);
+                String note = "-";
+                String strGong = dataAnnotations.ScanBoard(chess, true);//判定该步棋的攻击行为
+                String strFang = dataAnnotations.ScanBoard(chess, false);//判定该步棋的防守行为
+                note += dataAnnotations.Check(strGong, strFang);//根据攻守情况，返回最终的数据标注
+                
+                row.createCell(i++).setCellValue(i + "." + X + Y + note);
                 System.out.println(X + Y + note);
             }
 
@@ -303,10 +298,10 @@ public class MainUI extends JFrame {
             JOptionPane.showMessageDialog(this, "数据导出成功！");
         } catch (IOException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, e.getMessage(),"出错啦！",0);
-        }catch (EmptyFileException e){
+            JOptionPane.showMessageDialog(this, e.getMessage(), "出错啦！", 0);
+        } catch (EmptyFileException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, e.getMessage(),"出错啦！",0);
+            JOptionPane.showMessageDialog(this, e.getMessage(), "出错啦！", 0);
         }
 
 

@@ -368,7 +368,7 @@ public class DataAnnotations {
      * 比较攻击行为和防守行为，对该步棋给出最后的标注
      */
     public String Check(String strGong, String strFang) {
-        if (strGong.equals("##") && strFang.equals("##")) {
+        if (strGong.equals("##") && strFang.equals("##")) {//无攻无防
             return "定式";
         } else if (strGong.equals("##") || strFang.equals("##")) {
             if (strFang.equals("##"))//有攻无防
@@ -379,7 +379,7 @@ public class DataAnnotations {
             {
                 return strFang;
             }
-        } else {
+        } else {//有攻有防
             if (strFang.equals("防活三")) {
                 if (strGong.equals("冲四")) {
                     return "强冲四";
@@ -388,7 +388,7 @@ public class DataAnnotations {
                 }
 
             } else {
-                return strGong + strFang;
+                return strFang+"成"+strGong;
             }
         }
 
