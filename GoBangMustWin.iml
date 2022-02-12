@@ -8,46 +8,46 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://F:/软件/jar包/poi-3.17/poi-ooxml-3.17.jar!/" />
+          <root url="jar://$MODULE_DIR$/src/resources/jar包/poi-ooxml-3.17.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://F:/软件/jar包/poi-3.17/poi-3.17.jar!/" />
+          <root url="jar://$MODULE_DIR$/src/resources/jar包/poi-3.17.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://F:/软件/jar包/poi-3.17/ooxml-lib/xmlbeans-2.6.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/src/resources/jar包/commons-collections4-4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://F:/软件/jar包/poi-3.17/lib/commons-collections4-4.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/src/resources/jar包/poi-ooxml-schemas-3.17.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://F:/软件/jar包/poi-3.17/poi-ooxml-schemas-3.17.jar!/" />
+          <root url="jar://$MODULE_DIR$/src/resources/jar包/xmlbeans-2.6.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

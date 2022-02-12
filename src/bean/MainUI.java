@@ -244,7 +244,6 @@ public class MainUI extends JFrame {
             if (!file.exists()) {
                 //表格文件不存在，创建空白表格
                 XSSFWorkbook blankExcel = new XSSFWorkbook();
-
                 FileOutputStream outBlank = new FileOutputStream(file);
                 blankExcel.write(outBlank);
                 outBlank.close();//关闭输出流
