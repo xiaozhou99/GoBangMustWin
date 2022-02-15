@@ -21,7 +21,7 @@ public class MustWinGo {
     public static ArrayList<Integer> searchList; //搜索的棋谱列表，保存前面下的若干步都与棋盘上匹配的棋谱序号，后续直接从这些棋谱中搜索
     public static ArrayList<Integer> previousList; //searchList的备份，便于悔棋后恢复
     public static int undoFlag = 2;  //悔棋时用到
-    public static ManualManager manualManager = new ManualManager(); //二进制文件操作类
+    public static ManualManager manualManager = new ManualManager(); //二进制文件存储读取类
 
 
     public MustWinGo() throws Exception {
