@@ -21,10 +21,18 @@ public class MustWinGo {
     public static ArrayList<Integer> searchList; //搜索的棋谱列表，保存前面下的若干步都与棋盘上匹配的棋谱序号，后续直接从这些棋谱中搜索
     public static ArrayList<Integer> previousList; //searchList的备份，便于悔棋后恢复
     public static int undoFlag = 2;  //悔棋时用到
+    public static ManualManager manualManager = new ManualManager(); //二进制文件操作类
 
 
     public MustWinGo() throws Exception {
-        mustWinList = readExcel("src/main/resources/MustWinManual.xlsx");  //读取excel文件初始化棋谱列表
+        mustWinList = manualManager.readBinFile("src/main/resources/MustWinManual.bin");  //读取二进制文件初始化棋谱列表
+//        mustWinList = readExcel("src/main/resources/MustWinManual.xlsx");  //读取二进制文件初始化棋谱列表
+        Collections.sort(mustWinList,new SortByOrder());  //将棋谱按坐标排序
+        /*for(ArrayList<String> l : mustWinList){
+            for(String s:l)
+                System.out.print(s+" ");
+            System.out.println();
+        }*/
         currentCol = 0;
         searchList = new ArrayList<>();
         for (int i = 0; i < mustWinList.size(); i++) {  //将searchList初始化为所有棋谱序号，由于第一步默认都是下载天元
@@ -97,7 +105,7 @@ public class MustWinGo {
                 list.add(l); //将完整棋局加入棋谱列表
         }
 
-        Collections.sort(list,new SortByOrder());  //将棋谱按坐标排序
+//        Collections.sort(list,new SortByOrder());  //将棋谱按坐标排序
         return list;
     }
 
@@ -106,7 +114,7 @@ public class MustWinGo {
         if (cell == null) { //若空则返回空字符串
             return "";
         }
-        return cell.getStringCellValue(); //否则按字符串形式返回单元格内容
+        return cell.getStringCellValue().trim(); //否则按字符串形式返回单元格内容
     }
 
     // 开局初始化各变量
