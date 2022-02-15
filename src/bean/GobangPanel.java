@@ -371,7 +371,7 @@ public class GobangPanel extends JPanel {
                 threeChange(x, y);
             }
 
-            int winSide = isGameOver(currentPlayer);// еп╤ожу╬ж
+            int winSide = isGameOver(boardData[x][y]);// еп╤ожу╬ж
             if (winSide > 0) {
 
                 if (winSide == WHITE) {
