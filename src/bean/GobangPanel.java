@@ -20,8 +20,11 @@ public class GobangPanel extends JPanel {
     public static final int ManMan = 0;// 双人模式
     public static final int ManAI = 1;// 人机模式
 
-    public static final int HUMAN = 3;//
-    public static final int COMPUTER = 4;//
+    public static final int HUMAN = 3;//人先手
+    public static final int COMPUTER = 4;//计算机先手
+
+    public static int N = -10;//获取用户输入的N打
+    public static int pp = 0;//五手N打循环
 
     /**
      * history存储棋盘上所有棋子 画棋子 悔棋时用
@@ -51,7 +54,7 @@ public class GobangPanel extends JPanel {
 
     private int cx = CENTER, cy = CENTER;
 
-    public GobangPanel(JTextArea area,JDialog settingTip) {
+    public GobangPanel(JTextArea area, JDialog settingTip) {
         boardData = new int[BT][BT];//1-15存储棋子状态，0 16为边界
         for (int i = 0; i < BT; i++) {
             for (int j = 0; j < BT; j++) {
@@ -64,7 +67,7 @@ public class GobangPanel extends JPanel {
         lastStep = new int[2];
         win = new Win();
         this.area = area;
-        this.settingTip=settingTip;
+        this.settingTip = settingTip;
         addMouseMotionListener(mouseMotionListener);
         addMouseListener(mouseListener);
         setPreferredSize(new Dimension(650, 700));
@@ -91,8 +94,7 @@ public class GobangPanel extends JPanel {
             }
             togglePlayer();
             repaint();
-            if(VSMode==ManAI)
-            {
+            if (VSMode == ManAI) {
                 win.goback();
             }
         } else {
@@ -280,6 +282,9 @@ public class GobangPanel extends JPanel {
 
         repaint();
 
+        N = -10;//重置五手N打的FLAG
+        pp = 0;
+
     }
 
     // 鼠标移动
@@ -335,6 +340,12 @@ public class GobangPanel extends JPanel {
      * @return
      */
     private boolean putChess(int x, int y) {
+
+        //五手N打
+        if (VSMode == ManMan) {//人人模式
+            FiveBeat(x, y);
+        }
+
         if (boardData[x][y] == EMPTY) {
             // 棋盘搜索范围限制
             minx = Math.min(minx, x);
@@ -351,7 +362,15 @@ public class GobangPanel extends JPanel {
 
             lastStep[0] = x;// 保存上一步落子点
             lastStep[1] = y;
+
+
             repaint();
+            togglePlayer();
+            //三手交换
+            if (VSMode == ManMan) {
+                threeChange(x, y);
+            }
+
             int winSide = isGameOver(currentPlayer);// 判断终局
             if (winSide > 0) {
 
@@ -368,7 +387,6 @@ public class GobangPanel extends JPanel {
 
                 return false;
             }
-            togglePlayer();
             return true;
         }
         return false;
@@ -398,6 +416,43 @@ public class GobangPanel extends JPanel {
             Chess lastStep = history.peek();
             int x = lastStep.getX();
             int y = lastStep.getY();
+
+            //检查先手是否有禁手
+            Chess firstStep = history.get(0);
+            Chess step = history.get(history.size() - 1);
+            if (step.getColor() == firstStep.getColor()) {
+                int i = forbid(step.getColor());//判断禁手的类型
+                if (step.getColor() == 1) {
+                    if (i == 1) {
+                        MainUI.appendText("出现三三禁手，黑子失败\n");
+                        JOptionPane.showMessageDialog(GobangPanel.this, "出现三三禁手，黑子失败!");
+                    }
+                    if (i == 2) {
+                        MainUI.appendText("出现四四禁手，黑子失败\n");
+                        JOptionPane.showMessageDialog(GobangPanel.this, "出现四四禁手，黑子失败!");
+                    }
+                    if (i == 3) {
+                        MainUI.appendText("出现长连禁手，黑子失败\n");
+                        JOptionPane.showMessageDialog(GobangPanel.this, "出现长连禁手，黑子失败!");
+                        return 777;//结束程序
+                    }
+                }
+                if (step.getColor() == 2) {
+                    if (i == 1) {
+                        MainUI.appendText("出现三三禁手，白子失败\n");
+                        JOptionPane.showMessageDialog(GobangPanel.this, "出现三三禁手，白子失败!");
+                    }
+                    if (i == 2) {
+                        MainUI.appendText("出现四四禁手，白子失败\n");
+                        JOptionPane.showMessageDialog(GobangPanel.this, "出现四四禁手，白子失败!");
+                    }
+                    if (i == 3) {
+                        MainUI.appendText("出现长连禁手，白子失败\n");
+                        JOptionPane.showMessageDialog(GobangPanel.this, "出现长连禁手，白子失败!");
+                        return 777;//结束程序
+                    }
+                }
+            }
 
             // 四个方向
             if (check(x, y, 1, 0, color) + check(x, y, -1, 0, color) >= 4 ||
@@ -435,5 +490,276 @@ public class GobangPanel extends JPanel {
             }
         }
         return sum;
+    }
+
+    //禁手判断
+    public int forbid(int color) {//传入先手棋子的颜色
+        int k = 0;//计数三连
+        int m = 0;//1为三三禁手，2为四四禁手，3为长连禁手
+        int i = 0;//计数四连
+        int j = 0;//检查是否有长连情况
+        //三三禁手
+        for (int x = 1; x < 16; x++) {
+            for (int y = 1; y < 16; y++) {//循环查找棋盘的每一个棋子
+                if (boardData[x][y] == color) {
+                    //水平方向，包括三三，四四，长连
+                    if (boardData[x - 1][y] == color) {
+                        if (boardData[x - 2][y] == color) {
+                            if (boardData[x - 3][y] == 0) {
+                                if (boardData[x + 1][y] == 0) {
+                                    k++;//三三禁手,下面的计数也是，当有两个三三出现，即为禁手
+                                }
+                            }
+                            if (boardData[x - 3][y] == color) {
+                                if (boardData[x - 4][y] == 0 && boardData[x + 1][y] == 0) {
+                                    i++;//四四禁手，下同，当有两个四四出现，即为禁手
+                                }
+                                if (boardData[x - 4][y] == color && boardData[x - 5][y] == color) {
+                                    j++;//长连禁手
+
+                                }
+                            }
+                        } else if (boardData[x + 1][y] == color) {
+                            if (boardData[x + 2][y] == 0) {
+                                if (boardData[x - 2][y] == 0) {
+                                    k++;
+                                }
+                                if (boardData[x - 2][y] == color && boardData[x - 3][y] == 0) {
+                                    i++;
+                                }
+                            }
+                            if (boardData[x + 2][y] == color && boardData[x + 3][y] == 0 && boardData[x - 2][y] == 0) {
+                                i++;
+                            }
+
+                        }
+                    }
+                    if (boardData[x - 1][y] == 0) {
+                        if (boardData[x + 1][y] == color) {
+                            if (boardData[x + 2][y] == color) {
+                                if (boardData[x + 3][y] == 0) {
+                                    k++;
+                                }
+                                if (boardData[x + 3][y] == color) {
+                                    if (boardData[x + 4][y] == 0) {
+                                        i++;
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+                    //垂直方向
+                    if (boardData[x][y - 1] == color) {
+                        if (boardData[x][y - 2] == color) {
+                            if (boardData[x][y - 3] == 0) {
+                                if (boardData[x][y + 1] == 0) {
+                                    k++;
+                                }
+                            }
+                            if (boardData[x][y - 3] == color && boardData[x][y - 4] == 0 && boardData[x][y + 1] == 0) {
+                                i++;
+                            }
+                            if (boardData[x][y - 3] == color && boardData[x][y - 4] == color && boardData[x][y - 5] == color) {
+                                j++;
+                            }
+                        } else if (boardData[x][y + 1] == color) {
+                            if (boardData[x][y + 2] == 0) {
+                                if (boardData[x][y - 2] == 0) {
+                                    k++;
+                                }
+                                if (boardData[x][y - 2] == color && boardData[x][y - 3] == 0) {
+                                    i++;
+
+                                }
+                            }
+                            if (boardData[x][y + 2] == color && boardData[x][y + 3] == 0 && boardData[x][y - 2] == 0) {
+                                i++;
+                            }
+                        }
+
+                    }
+                    if (boardData[x][y - 1] == 0) {
+                        if (boardData[x][y + 1] == color) {
+                            if (boardData[x][y + 2] == color) {
+                                if (boardData[x][y + 3] == 0) {
+                                    k++;
+                                }
+                                if (boardData[x][y + 3] == color && boardData[x][y + 4] == 0) {
+                                    i++;
+                                }
+                            }
+                        }
+                    }
+                    //斜方向1
+                    if (boardData[x - 1][y - 1] == color) {
+                        if (boardData[x - 2][y - 2] == color) {
+                            if (boardData[x - 3][y - 3] == 0) {
+                                if (boardData[x + 1][y + 1] == 0) {
+                                    k++;
+                                }
+                            }
+                            if (boardData[x - 3][y - 3] == color) {
+                                if (boardData[x - 4][y - 4] == 0 && boardData[x + 1][y + 1] == 0) {
+                                    i++;
+                                }
+                                if (boardData[x - 4][y - 4] == color && boardData[x - 5][y - 5] == color) {
+                                    j++;
+                                }
+                            }
+                        } else if (boardData[x + 1][y + 1] == color) {
+                            if (boardData[x + 2][y + 2] == 0) {
+                                if (boardData[x - 2][y - 2] == 0) {
+                                    k++;
+                                    if (boardData[x - 2][y - 2] == color && boardData[x - 3][y - 3] == 0) {
+                                        i++;
+                                    }
+                                }
+                            }
+                            if (boardData[x + 2][y + 2] == color && boardData[x + 3][y + 3] == 0 && boardData[x - 2][y - 2] == 0) {
+                                i++;
+                            }
+                        }
+                    }
+                    if (boardData[x - 1][y - 1] == 0) {
+                        if (boardData[x + 1][y + 1] == color) {
+                            if (boardData[x + 2][y + 2] == color) {
+                                if (boardData[x + 3][y + 3] == 0) {
+                                    k++;
+                                }
+                                if (boardData[x + 3][y + 3] == color && boardData[x + 4][y + 4] == 0) {
+                                    i++;
+                                }
+                            }
+                        }
+                    }
+                    //斜方向2
+                    if (boardData[x - 1][y + 1] == color) {
+                        if (boardData[x - 2][y + 2] == color) {
+                            if (boardData[x - 3][y + 3] == 0) {
+                                if (boardData[x + 1][y - 1] == 0) {
+                                    k++;
+                                }
+                            }
+                            if (boardData[x - 3][y + 3] == color && boardData[x - 4][y + 4] == 0 && boardData[x + 1][y - 1] == 0) {
+                                i++;
+                            }
+                            if (boardData[x - 3][y + 3] == color && boardData[x - 4][y + 4] == color && boardData[x - 5][y + 5] == color) {
+                                j++;
+                            }
+                        } else if (boardData[x - 2][y + 2] == 0) {
+                            if (boardData[x + 1][y - 1] == color) {
+                                if (boardData[x + 2][y - 2] == 0) {
+                                    k++;
+                                }
+                                if (boardData[x + 2][y - 2] == color && boardData[x + 3][y - 3] == 0) {
+                                    i++;
+                                }
+                            }
+                        }
+                        if (boardData[x - 2][y + 2] == color && boardData[x - 3][y + 3] == 0 && boardData[x + 1][y - 1] == color && boardData[x + 2][y - 2] == 0) {
+                            i++;
+                        }
+
+                    }
+                    if (boardData[x - 1][y + 1] == 0) {
+                        if (boardData[x + 1][y - 1] == color) {
+                            if (boardData[x + 2][y - 2] == color) {
+                                if (boardData[x + 3][y - 3] == 0) {
+                                    k++;
+                                }
+                                if (boardData[x + 3][y - 3] == color && boardData[x + 4][y - 4] == 0) {
+                                    i++;
+                                }
+                            }
+                        }
+
+                    }
+                    if (k >= 2) {
+                        m = 1;//出现三三禁手
+                    }
+                    if (i >= 2) {
+                        m = 2;//出现四四禁手
+                    }
+                    if (j >= 1) {
+                        m = 3;//出现长连禁手
+                    }
+                    k = 0;
+                    i = 0;//遍历完一个点后重置，再遍历下一个点
+
+                }
+            }
+        }
+        return m;//根据返回值说明三三，四四，或长连禁手
+    }
+
+    public void FiveBeat(int x, int y) {
+        if (pp == 100) {
+            while (history.size() > 4) {
+                Chess p1 = history.pop();
+                boardData[p1.x][p1.y] = EMPTY;
+            }
+            boardData[x][y] = currentPlayer;
+            history.push(new Chess(x, y, currentPlayer));
+            pp++;
+            togglePlayer();
+        }
+        repaint();
+    }
+
+    public void threeChange(int x, int y) {
+        if (history.size() == 3) {
+            exchangeColor(x, y);
+        }
+        //N打
+        if (history.size() == 4) {
+            N = Integer.parseInt(JOptionPane.showInputDialog(null, "请输入五手N打的次数！"));
+        }
+        if (pp < N + 1) {
+            currentPlayer = history.get(0).getColor();
+            pp++;
+            System.out.println(pp);
+        }
+        if (pp == N + 1) {
+            JOptionPane.showMessageDialog(GobangPanel.this, "请选择留下的棋子！");
+            pp = 100;
+            currentPlayer = history.get(0).getColor();
+        }
+    }
+
+    //三手交换
+    public void exchangeColor(int x, int y) {
+        if (history.get(0).getColor() == 1) {
+            //1是黑子
+            int op = JOptionPane.showConfirmDialog(GobangPanel.this, "请选择是否三手交换", "三手交换", JOptionPane.YES_NO_OPTION);
+            //点击是，第三步是黑子下，则一三步变白，二变黑
+            if (op == 0) {
+                history.get(0).setColor(2);
+                history.get(1).setColor(1);
+                history.get(2).setColor(2);
+                boardData[history.get(0).getX()][history.get(0).getY()] = WHITE;
+                boardData[history.get(1).getX()][history.get(1).getY()] = BLACK;
+                boardData[history.get(2).getX()][history.get(2).getY()] = WHITE;
+                currentPlayer = BLACK;
+                return;
+
+            }
+        }
+        if (history.get(0).getColor() == 2) {
+            //2是白子
+            int op = JOptionPane.showConfirmDialog(GobangPanel.this, "请选择是否三手交换", "三手交换", JOptionPane.YES_NO_OPTION);
+            //点击是，第三步是黑子下，则一三步变白，二变黑
+            if (op == 0) {
+                history.get(0).setColor(1);
+                history.get(1).setColor(2);
+                history.get(2).setColor(1);
+                boardData[history.get(0).getX()][history.get(0).getY()] = BLACK;
+                boardData[history.get(1).getX()][history.get(1).getY()] = WHITE;
+                boardData[history.get(2).getX()][history.get(2).getY()] = BLACK;
+                currentPlayer = WHITE;
+
+            }
+        }
+
     }
 }
